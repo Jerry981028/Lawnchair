@@ -1068,16 +1068,6 @@ public final class Utilities {
     }
 
     public static boolean isBlacklistedAppInstalled(Context context) {
-        final PackageManager pm = context.getPackageManager();
-        List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
-        for (ApplicationInfo packageInfo : packages) {
-            for (String packageName : BLACKLISTED_APPLICATIONS) {
-                if (packageInfo.packageName.startsWith(packageName)) {
-                    return true;
-                }
-            }
-        }
-
         return BLACKLISTED_APPLICATIONS.length == 0;
     }
 
