@@ -1081,9 +1081,6 @@ public final class Utilities {
 
     public static boolean isBlacklistedAppInstalled(Context context) {
         PackageManager pm = context.getPackageManager();
-        for (String packageName : BLACKLISTED_APPLICATIONS) {
-            if (isAppEnabled(pm, packageName, 0)) return true;
-        }
         return false;
     }
 
