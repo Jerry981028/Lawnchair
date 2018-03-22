@@ -2,9 +2,9 @@ language: android
 dist: trusty
 jdk: oraclejdk8
 branches:
-   except:
-   - l10n_alpha2
-   - alpha
+  only:
+    - master
+    - dev
 env:
   - MAJOR_MINOR=1.1.0
 android:
@@ -15,10 +15,8 @@ android:
     - android-27
     - extra-google-m2repository
 before_install:
+  - if [ "$TRAVIS_BRANCH" == "master" ] ;then export TRAVIS_BUILD_NUMBER=1742 ;else export TRAVIS_BUILD_NUMBER=1743; fi
   - yes | sdkmanager "platforms;android-27"
-  - chmod a+x ./scripts/deploy-*.sh
-  - chmod a+x ./scripts/changelog.sh
-  - chmod a+x ./scripts/s3-upload.sh
   - git fetch --tags
 before_script:
   - bash scripts/changelog.sh > changelog.txt
@@ -33,29 +31,17 @@ cache:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
   - "$HOME/.android/build-cache"
-before_deploy:
-  - "cp app/build/outputs/apk/debug/app-debug.apk Lawnchair-$MAJOR_MINOR.$TRAVIS_BUILD_NUMBER.apk"
-  - "cp app/build/outputs/mapping/debug/mapping.txt proguard-$MAJOR_MINOR.$TRAVIS_BUILD_NUMBER.txt"
-deploy:
-  - provider: script
-    skip_cleanup: true
-    script: scripts/deploy-s3.sh
-    on:
-      branch: beta
-  - provider: script
-    skip_cleanup: true
-    script: scripts/deploy-s3.sh
-    on:
-      tags: true
-  - provider: releases
-    skip_cleanup: true
-    api_key: $GITHUB_OAUTH_TOKEN
-    file: "Lawnchair-$MAJOR_MINOR.$TRAVIS_BUILD_NUMBER.apk"
-    on:
-      branch: beta
-  - provider: releases
-    skip_cleanup: true
-    api_key: $GITHUB_OAUTH_TOKEN
-    file: "Lawnchair-$MAJOR_MINOR.$TRAVIS_BUILD_NUMBER.apk"
-    on:
-      tags: true
+after_success:
+  - cp app/build/outputs/apk/debug/app-debug.apk Lawnchair-$MAJOR_MINOR.$TRAVIS_BUILD_NUMBER.apk
+  - cp app/build/outputs/mapping/debug/mapping.txt proguard-$MAJOR_MINOR.$TRAVIS_BUILD_NUMBER.txt
+  - if [ "$TRAVIS_BRANCH" == "master" ] ;then mkdir -p bin ;else git clone https://github.com/Jerry981028/Lawnchair.git -b out bin/ ;fi
+  - mv Lawnchair-$MAJOR_MINOR.$TRAVIS_BUILD_NUMBER.apk bin/
+  - mv proguard-$MAJOR_MINOR.$TRAVIS_BUILD_NUMBER.txt bin/
+  - cd bin
+  - if [ "$TRAVIS_BRANCH" == "master" ] ;then git init ;fi
+  - git config user.name "bot"
+  - git config user.email "bot@github.com"
+  - git add .
+  - TAG="Lawnchair-${MAJOR_MINOR}.${TRAVIS_BUILD_NUMBER}"
+  - git commit -m "$TAG"
+  - git push --force --quiet "https://${GitHub_Token}@github.com/Jerry981028/Lawnchair.git" HEAD:out
